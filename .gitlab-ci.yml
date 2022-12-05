@@ -11,6 +11,6 @@ Dotnet Package Registry Publication:
     stage: deploy
     script:
         - dotnet build -c Release
-        - dotnet nuget push "bin/Release/*.nupkg" --source gitlab
+        - dotnet nuget push "bin/Release/*.nupkg" --source mrwatts-private-package-registry
     only:
         - tags
