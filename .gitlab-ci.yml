@@ -3,15 +3,14 @@ stages:
 
 variables:
     PACKAGE_REGISTRY_PROJECT: gitlab.com/api/v4/projects/27157125/packages
-    PACKAGE_REGISTRY_USERNAME: gitlab-ci-token
-    PACKAGE_REGISTRY_PASSWORD: ${CI_JOB_TOKEN}
+    MRWATTS_PRIVATE_PACKAGE_REGISTRY_USERNAME: gitlab-ci-token
+    MRWATTS_PRIVATE_PACKAGE_REGISTRY_PASSWORD: ${CI_JOB_TOKEN}
 
 Dotnet Package Registry Publication:
     image: mcr.microsoft.com/dotnet/sdk:7.0
     stage: deploy
     script:
         - dotnet build -c Release
-        - dotnet nuget add source "https://${PACKAGE_REGISTRY_PROJECT}/nuget/index.json" --name gitlab --username ${PACKAGE_REGISTRY_USERNAME} --password ${PACKAGE_REGISTRY_PASSWORD} --store-password-in-clear-text
         - dotnet nuget push "bin/Release/*.nupkg" --source gitlab
     only:
         - tags
