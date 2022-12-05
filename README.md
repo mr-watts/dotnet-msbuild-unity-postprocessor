@@ -30,6 +30,9 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
     <Target Name="PostProcessDotNetPackagesForUnity" AfterTargets="Restore">
         <Message Text="Running post-processing script for Unity..." Importance="high" />
         <PostProcessDotNetPackagesForUnity ProjectRoot="$(ProjectDir)" PackageRoot="$(NuGetPackageRoot)" />
+
+        <!-- Delete the script itself so Unity itself doesn't pick it up. -->
+        <Delete Files="$(PostProcessDotNetPackagesForUnityAssemblyFile)" />
     </Target>
 
 </Project>
