@@ -197,7 +197,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
                         await unityMetaFileGenerator.GenerateAsync(
                             $"{x.FullName}.meta",
-                            @"labels:\n" +
+                            "labels:\n" +
                             "- RoslynAnalyzer\n" +
                             "PluginImporter:\n" +
                             "  externalObjects: {}\n" +
