@@ -15,7 +15,7 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
         <!-- ... -->
 
         <!-- Development dependencies. -->
-        <PackageReference Include="MrWatts.MSBuild.UnityPostProcessor" Version="1.0.0" GeneratePathProperty="true" PrivateAssets="all" />
+        <PackageReference Include="MrWatts.MSBuild.UnityPostProcessor" Version="x.y.z" GeneratePathProperty="true" PrivateAssets="all" />
 
     </ItemGroup>
 
