@@ -6,7 +6,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
     {
         private readonly IUnityBuiltinAssemblyDetector delegatee;
 
-        private readonly Dictionary<string, string[]> cache = new Dictionary<string, string[]>();
+        private readonly Dictionary<string, string[]> cache = new Dictionary<string, string[]>(System.StringComparer.Ordinal);
 
         public MemoizingUnityBuiltinAssemblyDetector(IUnityBuiltinAssemblyDetector delegatee)
         {

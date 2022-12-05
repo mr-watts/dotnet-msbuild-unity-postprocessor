@@ -12,17 +12,22 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         private IUnityBuiltinAssemblyDetector unityBuiltinAssemblyDetector;
 
         [Required]
-        public string ProjectRoot { get; set; }
+        public string ProjectRoot { get; set; } = default!;
 
         [Required]
-        public string PackageRoot { get; set; }
+        public string PackageRoot { get; set; } = default!;
+
+        public PostProcessDotNetPackagesForUnity()
+        {
+            ServiceContainer serviceContainer = new ServiceContainer();
+            unityMetaFileGenerator = serviceContainer.UnityMetaFileGenerator;
+            unityBuiltinAssemblyDetector = serviceContainer.UnityBuiltinAssemblyDetector;
+        }
 
         public override bool Execute()
         {
             try
             {
-                InitializeDependencies();
-
                 // There is no other option here but to block, see https://github.com/dotnet/msbuild/issues/4174.
                 ProcessPackagesAsync().Wait();
                 return true;
@@ -32,13 +37,6 @@ namespace MrWatts.MSBuild.UnityPostProcessor
                 Log.LogErrorFromException(exception, showStackTrace: true);
                 return false;
             }
-        }
-
-        private void InitializeDependencies()
-        {
-            ServiceContainer serviceContainer = new ServiceContainer();
-            unityMetaFileGenerator = serviceContainer.UnityMetaFileGenerator;
-            unityBuiltinAssemblyDetector = serviceContainer.UnityBuiltinAssemblyDetector;
         }
 
         private async Task ProcessPackagesAsync()
