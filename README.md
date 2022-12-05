@@ -27,7 +27,7 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
 
     <UsingTask TaskName="UnityPostProcessor.PostProcessDotNetPackagesForUnity" AssemblyFile="$(PkgMrWatts_MSBuild_UnityPostProcessor)/lib/netstandard2.1/MSBuildUnityPostProcessor.dll" />
 
-    <Target Name="PostProcessPackagesForUnity" AfterTargets="Restore">
+    <Target Name="PostProcessDotNetPackagesForUnity" AfterTargets="Restore">
         <Message Text="Running post-processing script for Unity..." Importance="high" />
         <PostProcessDotNetPackagesForUnity ProjectRoot="$(ProjectDir)" PackageRoot="$(NuGetPackageRoot)" />
     </Target>
