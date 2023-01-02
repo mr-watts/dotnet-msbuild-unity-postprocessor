@@ -38,7 +38,7 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
 </Project>
 ```
 
-> Note that this package is published to our private registry, so you will need a `nuget.config` to tell .NET CLI to search there as well (see also [this example](https://gitlab.com/mr-watts/internal/dotnet-oasis/-/blob/develop/nuget.config)).
+> Note that this package is published to our private registry, so you will need a `nuget.config` to tell .NET CLI to search there as well (see also [this example](https://gitlab.com/mr-watts/medenvision/live-surgery/unity-live-surgery/-/blob/d55ed4e4ba7dea5887f4ebf9c1b148e104d0936c/nuget.config)).
 
 After that, each time you run `dotnet restore NuGetDependencies.csproj` on your project file, this task will be executed to post-process NuGet dependencies specifically for Unity. Output will be displayed as this happens.
 
