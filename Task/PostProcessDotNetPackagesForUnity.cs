@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Sources;
 using Microsoft.Build.Framework;
 
 namespace MrWatts.MSBuild.UnityPostProcessor
@@ -50,24 +51,25 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
             Log.LogMessage(MessageImportance.High, $"  - {packageName}");
 
-            if (IsPackageShippedByUnity(packageDirectory))
+            if (IsPackageShippedByUnity(packageName))
             {
-                Log.LogMessage(MessageImportance.High, "    - Dropping because Unity already ships its own version of this assembly.");
+                // We can't just drop the files as tools such as OmniSharp might still want to scan the assemblies for IntelliSense.
+                Log.LogMessage(MessageImportance.High, "    - Marking all files as ignored because Unity already ships its own version of this assembly.");
 
-                Directory.Delete(packageDirectory, true);
-
-                return;
+                await MarkAllLibrariesInFolderAsIgnoredByUnityAsync(packageDirectory);
             }
-
-            await Task.WhenAll(Directory.GetDirectories(packageDirectory).Select(async x => await ProcessPackageVersionAsync(x)));
+            else
+            {
+                await Task.WhenAll(Directory.GetDirectories(packageDirectory).Select(async x => await ProcessPackageVersionAsync(x)));
+            }
         }
 
         private async Task ProcessPackageVersionAsync(string packageVersionFolder)
         {
             DropConflictingNativeLibraries(packageVersionFolder);
             DropUnsupportedNativeRuntimeLibraries(packageVersionFolder);
-            FilterMatchingDotNetVersionFolders(packageVersionFolder);
 
+            await FilterMatchingDotNetVersionFoldersAsync(packageVersionFolder);
             await GenerateRoslynAnalyzerUnityMetaFilesAsync(packageVersionFolder);
         }
 
@@ -120,16 +122,18 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         /// <para>Filters out assemblies for unsupported or older .NET API versions from all "lib" folders.</para>
         /// </summary>
         /// <param name="packageVersionFolder"></param>
-        private void FilterMatchingDotNetVersionFolders(string packageVersionFolder)
+        private async Task FilterMatchingDotNetVersionFoldersAsync(string packageVersionFolder)
         {
-            Directory.GetDirectories(packageVersionFolder, "lib", SearchOption.AllDirectories)
-                .ToList()
-                .ForEach(x =>
-                {
-                    Log.LogMessage(MessageImportance.High, $"    - Detected library folder with assemblies '{Path.GetRelativePath(packageVersionFolder, x)}'.");
+            await Task.WhenAll(
+                Directory.GetDirectories(packageVersionFolder, "lib", SearchOption.AllDirectories)
+                    .ToList()
+                    .Select(x =>
+                    {
+                        Log.LogMessage(MessageImportance.High, $"    - Detected library folder with assemblies '{Path.GetRelativePath(packageVersionFolder, x)}'.");
 
-                    FilterMatchingDotNetVersionFolder(x);
-                });
+                        return FilterMatchingDotNetVersionFolderAsync(x);
+                    })
+            );
         }
 
         /// <summary>
@@ -141,7 +145,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         /// </para>
         /// </summary>
         /// <param name="libraryFolder"></param>
-        private void FilterMatchingDotNetVersionFolder(string libraryFolder)
+        private async Task FilterMatchingDotNetVersionFolderAsync(string libraryFolder)
         {
             string[] apiFolderNames = new string[] {
                 "netstandard2.1",
@@ -163,20 +167,58 @@ namespace MrWatts.MSBuild.UnityPostProcessor
             }
             catch (ArgumentNullException)
             {
-                Log.LogMessage(MessageImportance.High, "      - WARNING: No compatible assemblies found.");
+                Log.LogMessage(MessageImportance.High, "      - WARNING: No compatible assemblies found, none will be usable by Unity.");
                 return;
             }
 
-            Log.LogMessage(MessageImportance.High, $"      - Maintaining best compatible version '{highestCompatibleDotNetVersion}'.");
+            Log.LogMessage(MessageImportance.High, $"      - Best compatible version is '{highestCompatibleDotNetVersion}', marking assemblies in other folders so Unity ignores them.");
 
-            Directory.GetDirectories(libraryFolder)
-                .Select(x => new DirectoryInfo(x))
-                .Where(x => x.Name != highestCompatibleDotNetVersion)
-                .ToList()
-                .ForEach(x =>
-                {
-                    Directory.Delete(x.FullName, true);
-                });
+            await Task.WhenAll(
+                Directory.GetDirectories(libraryFolder)
+                    .Select(x => new DirectoryInfo(x))
+                    .Where(x => x.Name != highestCompatibleDotNetVersion)
+                    .ToList()
+                    .Select(x => MarkAllLibrariesInFolderAsIgnoredByUnityAsync(x.FullName))
+            );
+        }
+
+        private async Task MarkAllLibrariesInFolderAsIgnoredByUnityAsync(string folder)
+        {
+            await Task.WhenAll(
+                (new DirectoryInfo(folder))
+                    .GetFiles("*.dll", SearchOption.AllDirectories)
+                    .ToList()
+                    .Select(x =>
+                    {
+                        return unityMetaFileGenerator.GenerateAsync(
+                            $"{x.FullName}.meta",
+                            "PluginImporter:\n" +
+                            "  externalObjects: {}\n" +
+                            "  serializedVersion: 2\n" +
+                            "  iconMap: {}\n" +
+                            "  executionOrder: {}\n" +
+                            "  defineConstraints: []\n" +
+                            "  isPreloaded: 0\n" +
+                            "  isOverridable: 0\n" +
+                            "  isExplicitlyReferenced: 0\n" +
+                            "  validateReferences: 1\n" +
+                            "  platformData:\n" +
+                            "  - first:\n" +
+                            "      : Any\n" +
+                            "    second:\n" +
+                            "      enabled: 0\n" +
+                            "      settings: {}\n" +
+                            "  - first:\n" +
+                            "      Any:\n" +
+                            "    second:\n" +
+                            "      enabled: 0\n" +
+                            "      settings: {}\n" +
+                            "  userData:\n" +
+                            "  assetBundleName:\n" +
+                            "  assetBundleVariant:\n"
+                        );
+                    })
+            );
         }
 
         private async Task GenerateRoslynAnalyzerUnityMetaFilesAsync(string packageVersionFolder)
