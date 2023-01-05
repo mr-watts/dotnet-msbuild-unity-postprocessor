@@ -29,7 +29,7 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
 
     <Target Name="PostProcessDotNetPackagesForUnity" AfterTargets="Restore">
         <Message Text="Running post-processing script for Unity..." Importance="high" />
-        <PostProcessDotNetPackagesForUnity ProjectRoot="$(ProjectDir)" PackageRoot="$(NuGetPackageRoot)" />
+        <PostProcessDotNetPackagesForUnity ProjectRoot="$(ProjectDir)" PackageRoot="$(NuGetPackageRoot)" UnityInstallationBasePath="$(UNITY_INSTALLATION_BASE_PATH)" />
     </Target>
 
 </Project>
@@ -37,7 +37,7 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
 
 > Note that this package is published to our private registry, so you will need a `nuget.config` to tell .NET CLI to search there as well (see also [this example](https://gitlab.com/mr-watts/medenvision/live-surgery/unity-live-surgery/-/blob/d55ed4e4ba7dea5887f4ebf9c1b148e104d0936c/nuget.config)).
 
-After that, run:
+After that, **set `UNITY_INSTALLATION_BASE_PATH` as environment variable** (e.g. the same way you set `MRWATTS_PRIVATE_PACKAGE_REGISTRY_USERNAME` for `nuget.config`), and run:
 
 ```sh
 dotnet restore NuGetDependencies.csproj

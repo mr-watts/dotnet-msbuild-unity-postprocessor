@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace MrWatts.MSBuild.UnityPostProcessor
 {
@@ -6,21 +7,23 @@ namespace MrWatts.MSBuild.UnityPostProcessor
     {
         private readonly IUnityBuiltinAssemblyDetector delegatee;
 
-        private readonly Dictionary<string, string[]> cache = new Dictionary<string, string[]>(System.StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, string[]> cache = new ConcurrentDictionary<string, string[]>(System.StringComparer.Ordinal);
 
         public MemoizingUnityBuiltinAssemblyDetector(IUnityBuiltinAssemblyDetector delegatee)
         {
             this.delegatee = delegatee;
         }
 
-        public string[] Detect(string unityProjectFolder)
+        public async Task<string[]> DetectAsync(string unityInstallationBasePath, string unityProjectFolder)
         {
-            if (!cache.ContainsKey(unityProjectFolder))
+            string cacheKey = $"{unityInstallationBasePath}{unityProjectFolder}";
+
+            if (!cache.ContainsKey(cacheKey))
             {
-                cache[unityProjectFolder] = delegatee.Detect(unityProjectFolder);
+                cache[cacheKey] = await delegatee.DetectAsync(unityInstallationBasePath, unityProjectFolder);
             }
 
-            return cache[unityProjectFolder];
+            return cache[cacheKey];
         }
     }
 }

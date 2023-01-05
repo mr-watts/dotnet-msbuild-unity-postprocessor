@@ -2,8 +2,8 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using Microsoft.Build.Framework;
+using MrWatts.Internal.Extensions;
 
 namespace MrWatts.MSBuild.UnityPostProcessor
 {
@@ -17,6 +17,9 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         [Required]
         public string PackageRoot { get; set; } = default!;
+
+        [Required]
+        public string UnityInstallationBasePath { get; set; } = default!;
 
         public PostProcessDotNetPackagesForUnity()
         {
@@ -42,7 +45,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         private async Task ProcessPackagesAsync()
         {
-            await Task.WhenAll(Directory.GetDirectories(PackageRoot).Select(async x => await ProcessPackageAsync(x)));
+            await Directory.GetDirectories(PackageRoot).ForEachAsync(ProcessPackageAsync);
         }
 
         private async Task ProcessPackageAsync(string packageDirectory)
@@ -51,7 +54,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
             Log.LogMessage(MessageImportance.High, $"  - {packageName}");
 
-            if (IsPackageShippedByUnity(packageName))
+            if (await IsPackageShippedByUnityAsync(packageName))
             {
                 // We can't just drop the files as tools such as OmniSharp might still want to scan the assemblies for IntelliSense.
                 Log.LogMessage(MessageImportance.High, "    - Marking all files as ignored because Unity already ships its own version of this assembly.");
@@ -68,7 +71,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
             }
             else
             {
-                await Task.WhenAll(Directory.GetDirectories(packageDirectory).Select(async x => await ProcessPackageVersionAsync(x)));
+                await Directory.GetDirectories(packageDirectory).ForEachAsync(ProcessPackageVersionAsync);
             }
         }
 
@@ -132,16 +135,14 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         /// <param name="packageVersionFolder"></param>
         private async Task FilterMatchingDotNetVersionFoldersAsync(string packageVersionFolder)
         {
-            await Task.WhenAll(
-                Directory.GetDirectories(packageVersionFolder, "lib", SearchOption.AllDirectories)
-                    .ToList()
-                    .Select(x =>
-                    {
-                        Log.LogMessage(MessageImportance.High, $"    - Detected library folder with assemblies '{Path.GetRelativePath(packageVersionFolder, x)}'.");
+            await Directory.GetDirectories(packageVersionFolder, "lib", SearchOption.AllDirectories)
+                .ToList()
+                .ForEachAsync(async x =>
+                {
+                    Log.LogMessage(MessageImportance.High, $"    - Detected library folder with assemblies '{Path.GetRelativePath(packageVersionFolder, x)}'.");
 
-                        return FilterMatchingDotNetVersionFolderAsync(x);
-                    })
-            );
+                    await FilterMatchingDotNetVersionFolderAsync(x);
+                });
         }
 
         /// <summary>
@@ -181,51 +182,45 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
             Log.LogMessage(MessageImportance.High, $"      - Best compatible version is '{highestCompatibleDotNetVersion}', marking assemblies in other folders so Unity ignores them.");
 
-            await Task.WhenAll(
-                Directory.GetDirectories(libraryFolder)
-                    .Select(x => new DirectoryInfo(x))
-                    .Where(x => x.Name != highestCompatibleDotNetVersion)
-                    .ToList()
-                    .Select(x => MarkAllLibrariesInFolderAsIgnoredByUnityAsync(x.FullName))
-            );
+            await Directory.GetDirectories(libraryFolder)
+                .Select(x => new DirectoryInfo(x))
+                .Where(x => x.Name != highestCompatibleDotNetVersion)
+                .ToList()
+                .ForEachAsync(x => MarkAllLibrariesInFolderAsIgnoredByUnityAsync(x.FullName));
         }
 
         private async Task MarkAllLibrariesInFolderAsIgnoredByUnityAsync(string folder)
         {
-            await Task.WhenAll(
-                (new DirectoryInfo(folder))
-                    .GetFiles("*.dll", SearchOption.AllDirectories)
-                    .ToList()
-                    .Select(x =>
-                    {
-                        return unityMetaFileGenerator.GenerateAsync(
-                            $"{x.FullName}.meta",
-                            "PluginImporter:\n" +
-                            "  externalObjects: {}\n" +
-                            "  serializedVersion: 2\n" +
-                            "  iconMap: {}\n" +
-                            "  executionOrder: {}\n" +
-                            "  defineConstraints: []\n" +
-                            "  isPreloaded: 0\n" +
-                            "  isOverridable: 0\n" +
-                            "  isExplicitlyReferenced: 0\n" +
-                            "  validateReferences: 1\n" +
-                            "  platformData:\n" +
-                            "  - first:\n" +
-                            "      : Any\n" +
-                            "    second:\n" +
-                            "      enabled: 0\n" +
-                            "      settings: {}\n" +
-                            "  - first:\n" +
-                            "      Any:\n" +
-                            "    second:\n" +
-                            "      enabled: 0\n" +
-                            "      settings: {}\n" +
-                            "  userData:\n" +
-                            "  assetBundleName:\n" +
-                            "  assetBundleVariant:\n"
-                        );
-                    })
+            await new DirectoryInfo(folder)
+                .GetFiles("*.dll", SearchOption.AllDirectories)
+                .ToList()
+                .ForEachAsync(x => unityMetaFileGenerator.GenerateAsync(
+                    $"{x.FullName}.meta",
+                    "PluginImporter:\n" +
+                    "  externalObjects: {}\n" +
+                    "  serializedVersion: 2\n" +
+                    "  iconMap: {}\n" +
+                    "  executionOrder: {}\n" +
+                    "  defineConstraints: []\n" +
+                    "  isPreloaded: 0\n" +
+                    "  isOverridable: 0\n" +
+                    "  isExplicitlyReferenced: 0\n" +
+                    "  validateReferences: 1\n" +
+                    "  platformData:\n" +
+                    "  - first:\n" +
+                    "      : Any\n" +
+                    "    second:\n" +
+                    "      enabled: 0\n" +
+                    "      settings: {}\n" +
+                    "  - first:\n" +
+                    "      Any:\n" +
+                    "    second:\n" +
+                    "      enabled: 0\n" +
+                    "      settings: {}\n" +
+                    "  userData:\n" +
+                    "  assetBundleName:\n" +
+                    "  assetBundleVariant:\n"
+                )
             );
         }
 
@@ -238,80 +233,78 @@ namespace MrWatts.MSBuild.UnityPostProcessor
                 return;
             }
 
-            await Task.WhenAll(
-                directoryInfo
-                    .GetFiles("*.dll", SearchOption.AllDirectories)
-                    .Select(async x =>
-                    {
-                        Log.LogMessage(MessageImportance.High, $"    - Processing Roslyn analyzer assembly '{Path.GetRelativePath(packageVersionFolder, x.FullName)}'.");
+            await directoryInfo
+                .GetFiles("*.dll", SearchOption.AllDirectories)
+                .ForEachAsync(async x =>
+                {
+                    Log.LogMessage(MessageImportance.High, $"    - Processing Roslyn analyzer assembly '{Path.GetRelativePath(packageVersionFolder, x.FullName)}'.");
 
-                        await unityMetaFileGenerator.GenerateAsync(
-                            $"{x.FullName}.meta",
-                            "labels:\n" +
-                            "- RoslynAnalyzer\n" +
-                            "PluginImporter:\n" +
-                            "  externalObjects: {}\n" +
-                            "  serializedVersion: 2\n" +
-                            "  iconMap: {}\n" +
-                            "  executionOrder: {}\n" +
-                            "  defineConstraints: []\n" +
-                            "  isPreloaded: 0\n" +
-                            "  isOverridable: 0\n" +
-                            "  isExplicitlyReferenced: 0\n" +
-                            "  validateReferences: 1\n" +
-                            "  platformData:\n" +
-                            "  - first:\n" +
-                            "      : Any\n" +
-                            "    second:\n" +
-                            "      enabled: 0\n" +
-                            "      settings:\n" +
-                            "        Exclude Editor: 1\n" +
-                            "        Exclude Linux64: 1\n" +
-                            "        Exclude OSXUniversal: 1\n" +
-                            "        Exclude Win: 1\n" +
-                            "        Exclude Win64: 1\n" +
-                            "  - first:\n" +
-                            "      Any:\n" +
-                            "    second:\n" +
-                            "      enabled: 0\n" +
-                            "      settings: {}\n" +
-                            "  - first:\n" +
-                            "      Editor: Editor\n" +
-                            "    second:\n" +
-                            "      enabled: 0\n" +
-                            "      settings:\n" +
-                            "        DefaultValueInitialized: true\n" +
-                            "  - first:\n" +
-                            "      Standalone: Win\n" +
-                            "    second:\n" +
-                            "      enabled: 0\n" +
-                            "      settings:\n" +
-                            "        CPU: None\n" +
-                            "  - first:\n" +
-                            "      Standalone: Win64\n" +
-                            "    second:\n" +
-                            "      enabled: 0\n" +
-                            "      settings:\n" +
-                            "        CPU: None\n" +
-                            "  - first:\n" +
-                            "      Windows Store Apps: WindowsStoreApps\n" +
-                            "    second:\n" +
-                            "      enabled: 0\n" +
-                            "      settings:\n" +
-                            "        CPU: AnyCPU\n" +
-                            "  userData:\n" +
-                            "  assetBundleName:\n" +
-                            "  assetBundleVariant:\n"
-                                .Trim()
-                        );
-                    }
-                )
+                    await unityMetaFileGenerator.GenerateAsync(
+                        $"{x.FullName}.meta",
+                        "labels:\n" +
+                        "- RoslynAnalyzer\n" +
+                        "PluginImporter:\n" +
+                        "  externalObjects: {}\n" +
+                        "  serializedVersion: 2\n" +
+                        "  iconMap: {}\n" +
+                        "  executionOrder: {}\n" +
+                        "  defineConstraints: []\n" +
+                        "  isPreloaded: 0\n" +
+                        "  isOverridable: 0\n" +
+                        "  isExplicitlyReferenced: 0\n" +
+                        "  validateReferences: 1\n" +
+                        "  platformData:\n" +
+                        "  - first:\n" +
+                        "      : Any\n" +
+                        "    second:\n" +
+                        "      enabled: 0\n" +
+                        "      settings:\n" +
+                        "        Exclude Editor: 1\n" +
+                        "        Exclude Linux64: 1\n" +
+                        "        Exclude OSXUniversal: 1\n" +
+                        "        Exclude Win: 1\n" +
+                        "        Exclude Win64: 1\n" +
+                        "  - first:\n" +
+                        "      Any:\n" +
+                        "    second:\n" +
+                        "      enabled: 0\n" +
+                        "      settings: {}\n" +
+                        "  - first:\n" +
+                        "      Editor: Editor\n" +
+                        "    second:\n" +
+                        "      enabled: 0\n" +
+                        "      settings:\n" +
+                        "        DefaultValueInitialized: true\n" +
+                        "  - first:\n" +
+                        "      Standalone: Win\n" +
+                        "    second:\n" +
+                        "      enabled: 0\n" +
+                        "      settings:\n" +
+                        "        CPU: None\n" +
+                        "  - first:\n" +
+                        "      Standalone: Win64\n" +
+                        "    second:\n" +
+                        "      enabled: 0\n" +
+                        "      settings:\n" +
+                        "        CPU: None\n" +
+                        "  - first:\n" +
+                        "      Windows Store Apps: WindowsStoreApps\n" +
+                        "    second:\n" +
+                        "      enabled: 0\n" +
+                        "      settings:\n" +
+                        "        CPU: AnyCPU\n" +
+                        "  userData:\n" +
+                        "  assetBundleName:\n" +
+                        "  assetBundleVariant:\n"
+                            .Trim()
+                    );
+                }
             );
         }
 
-        private bool IsPackageShippedByUnity(string packageName)
+        private async Task<bool> IsPackageShippedByUnityAsync(string packageName)
         {
-            string[] builtinUnityDotNetAssemblies = unityBuiltinAssemblyDetector.Detect(ProjectRoot);
+            string[] builtinUnityDotNetAssemblies = await unityBuiltinAssemblyDetector.DetectAsync(UnityInstallationBasePath, ProjectRoot);
 
             if (builtinUnityDotNetAssemblies.Length == 0)
             {
