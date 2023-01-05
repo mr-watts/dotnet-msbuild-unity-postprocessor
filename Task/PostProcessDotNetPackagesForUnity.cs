@@ -58,6 +58,14 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
                 await MarkAllLibrariesInFolderAsIgnoredByUnityAsync(packageDirectory);
             }
+            else if (IsThisPackage(packageName))
+            {
+                // We can't just remove this because on Windows, a "file is in use" error will be generated because
+                // MSBuild is still running and using the assembly.
+                Log.LogMessage(MessageImportance.High, "    - Marking assemblies as ignored so Unity doesn't pick it up (it's this script).");
+
+                await MarkAllLibrariesInFolderAsIgnoredByUnityAsync(packageDirectory);
+            }
             else
             {
                 await Task.WhenAll(Directory.GetDirectories(packageDirectory).Select(async x => await ProcessPackageVersionAsync(x)));
@@ -311,6 +319,11 @@ namespace MrWatts.MSBuild.UnityPostProcessor
             }
 
             return builtinUnityDotNetAssemblies.Contains(packageName, StringComparer.OrdinalIgnoreCase);
+        }
+
+        private bool IsThisPackage(string packageName)
+        {
+            return string.Equals(packageName, "mrwatts.msbuild.unitypostprocessor", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
