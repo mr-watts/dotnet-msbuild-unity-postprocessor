@@ -56,3 +56,7 @@ Ensure all variables in `.env.dist` are loaded in your environment. There are a 
 After the variables are in your environment:
 
 1. Run `dotnet build`.
+
+### Testing In Project
+
+To test inside a project, run e.g. `dotnet build -c Release` and replace the path of `PostProcessDotNetPackagesForUnityAssemblyFile` from _Usage_ above with the full path to the DLL in `bin/Release/netstandard2.1/MSBuildUnityPostProcessor.dll`.
