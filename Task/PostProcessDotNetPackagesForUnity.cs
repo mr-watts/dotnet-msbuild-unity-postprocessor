@@ -56,10 +56,18 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
             if (await IsPackageShippedByUnityAsync(packageName))
             {
-                // We can't just drop the files as tools such as OmniSharp might still want to scan the assemblies for IntelliSense.
-                Log.LogMessage(MessageImportance.High, "    - Marking all files as ignored because Unity already ships its own version of this assembly.");
+                /*
+                    We don't want to drop the files as tools such as OmniSharp might still want to scan the assemblies
+                    for IntelliSense, but Unity insists on still using these in its reference rewriter on UWP builds,
+                    even when they are excluded from all platforms, are not referenced automatically, are set to not
+                    validate, and have define constraints.
 
-                await MarkAllLibrariesInFolderAsIgnoredByUnityAsync(packageDirectory);
+                    The *only* way to ensure Unity doesn't do so is to fully delete them, which in turn might pose
+                    problems for OmniSharp, but we have no better option, currently.
+                */
+                Log.LogMessage(MessageImportance.High, "    - Dropping because Unity already ships its own version of this assembly and it cannot be properly excluded through meta files in UWP builds.");
+
+                Directory.Delete(packageDirectory, true);
             }
             else if (IsThisPackage(packageName))
             {
