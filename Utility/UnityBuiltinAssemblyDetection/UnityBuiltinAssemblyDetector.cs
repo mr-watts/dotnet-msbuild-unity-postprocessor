@@ -13,7 +13,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
             string projectVersionFilePath = Path.Combine(unityProjectFolder, "ProjectSettings", "ProjectVersion.txt");
             string projectVersionFileContents = await File.ReadAllTextAsync(projectVersionFilePath);
 
-            Match? match = Regex.Match(projectVersionFileContents, "(?<=m_EditorVersion:\\s).+", RegexOptions.Compiled, TimeSpan.FromMinutes(1));
+            Match? match = Regex.Match(projectVersionFileContents, "(?<=m_EditorVersion:\\s)[f\\d\\.]+", RegexOptions.Compiled, TimeSpan.FromMinutes(1));
 
             if (match is null)
             {
