@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -120,16 +121,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         /// <param name="packageVersionFolder"></param>
         private void DropUnsupportedNativeRuntimeLibraries(string packageVersionFolder)
         {
-            DirectoryInfo directoryInfo = new DirectoryInfo(Path.Combine(packageVersionFolder, "runtimes"));
-
-            if (!directoryInfo.Exists)
-            {
-                return;
-            }
-
-            directoryInfo
-                .GetFiles("*.dll", SearchOption.AllDirectories)
-                .ToList()
+            FindLibrariesInFolder(Path.Combine(packageVersionFolder, "runtimes"))
                 .ForEach(x =>
                 {
                     Log.LogMessage(MessageImportance.High, $"    - WARNING: Dropping currently unsupported native library '{Path.GetRelativePath(packageVersionFolder, x.FullName)}'.");
@@ -199,9 +191,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         private async Task MarkAllLibrariesInFolderAsIgnoredByUnityAsync(string folder)
         {
-            await new DirectoryInfo(folder)
-                .GetFiles("*.dll", SearchOption.AllDirectories)
-                .ToList()
+            await FindLibrariesInFolder(folder)
                 .ForEachAsync(x => unityMetaFileGenerator.GenerateAsync(
                     $"{x.FullName}.meta",
                     "PluginImporter:\n" +
@@ -234,15 +224,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         private async Task GenerateRoslynAnalyzerUnityMetaFilesAsync(string packageVersionFolder)
         {
-            DirectoryInfo directoryInfo = new DirectoryInfo(Path.Combine(packageVersionFolder, "analyzers"));
-
-            if (!directoryInfo.Exists)
-            {
-                return;
-            }
-
-            await directoryInfo
-                .GetFiles("*.dll", SearchOption.AllDirectories)
+            await FindLibrariesInFolder(Path.Combine(packageVersionFolder, "analyzers"))
                 .ForEachAsync(async x =>
                 {
                     Log.LogMessage(MessageImportance.High, $"    - Processing Roslyn analyzer assembly '{Path.GetRelativePath(packageVersionFolder, x.FullName)}'.");
@@ -308,6 +290,18 @@ namespace MrWatts.MSBuild.UnityPostProcessor
                     );
                 }
             );
+        }
+
+        private List<FileInfo> FindLibrariesInFolder(string folder)
+        {
+            DirectoryInfo directoryInfo = new DirectoryInfo(folder);
+
+            if (!directoryInfo.Exists)
+            {
+                return new List<FileInfo>();
+            }
+
+            return directoryInfo.GetFiles("*.dll", SearchOption.AllDirectories).ToList();
         }
 
         private async Task<bool> IsPackageShippedByUnityAsync(string packageName)
