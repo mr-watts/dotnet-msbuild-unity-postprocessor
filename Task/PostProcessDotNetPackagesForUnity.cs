@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -57,17 +58,19 @@ namespace MrWatts.MSBuild.UnityPostProcessor
             if (await IsPackageShippedByUnityAsync(packageName))
             {
                 /*
-                    We don't want to drop the files as tools such as OmniSharp might still want to scan the assemblies
-                    for IntelliSense, but Unity insists on still using these in its reference rewriter on UWP builds,
-                    even when they are excluded from all platforms, are not referenced automatically, are set to not
-                    validate, and have define constraints.
+                    We don't want to drop all files as tools - such as OmniSharp - might still want to scan some files
+                    (e.g. ref folders and XML index files for assemblies) for IntelliSense.
 
-                    The *only* way to ensure Unity doesn't do so is to fully delete them, which in turn might pose
-                    problems for OmniSharp, but we have no better option, currently.
+                    Ideally we would not drop the libraries and assemblies themselves and ignore them instead, but Unity
+                    (at least 2021.3.8) insists on *still* using these in its reference rewriter on UWP builds, even
+                    when they are excluded from all platforms, are not referenced automatically, are set to not
+                    validate, and have define constraints. The *only* way to ensure Unity doesn't do so is to fully
+                    delete them.
                 */
-                Log.LogMessage(MessageImportance.High, "    - Dropping because Unity already ships its own version of this assembly and it cannot be properly excluded through meta files in UWP builds.");
+                Log.LogMessage(MessageImportance.High, "    - Dropping all libraries because Unity already ships its own version of these and they cannot be properly excluded through meta files in UWP builds.");
 
-                Directory.Delete(packageDirectory, true);
+                FindLibrariesInFolder(packageDirectory)
+                    .ForEach(x => File.Delete(x.FullName));
             }
             else if (IsThisPackage(packageName))
             {
@@ -98,12 +101,11 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         /// <param name="packageVersionFolder"></param>
         private void DropConflictingNativeLibraries(string packageVersionFolder)
         {
-            Directory.GetDirectories(packageVersionFolder, "ref", SearchOption.AllDirectories)
-                .ToList()
+            FindLibrariesInFolder(Path.Combine(packageVersionFolder, "ref"))
                 .ForEach(x =>
                 {
-                    Log.LogMessage(MessageImportance.High, $"    - WARNING: Dropping unsupported ref folder '{Path.GetRelativePath(packageVersionFolder, x)}'.");
-                    Directory.Delete(x, true);
+                    Log.LogMessage(MessageImportance.High, $"    - WARNING: Dropping unsupported ref assembly '{Path.GetRelativePath(packageVersionFolder, x.FullName)}'.");
+                    File.Delete(x.FullName);
                 });
         }
 
@@ -120,16 +122,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         /// <param name="packageVersionFolder"></param>
         private void DropUnsupportedNativeRuntimeLibraries(string packageVersionFolder)
         {
-            DirectoryInfo directoryInfo = new DirectoryInfo(Path.Combine(packageVersionFolder, "runtimes"));
-
-            if (!directoryInfo.Exists)
-            {
-                return;
-            }
-
-            directoryInfo
-                .GetFiles("*.dll", SearchOption.AllDirectories)
-                .ToList()
+            FindLibrariesInFolder(Path.Combine(packageVersionFolder, "runtimes"))
                 .ForEach(x =>
                 {
                     Log.LogMessage(MessageImportance.High, $"    - WARNING: Dropping currently unsupported native library '{Path.GetRelativePath(packageVersionFolder, x.FullName)}'.");
@@ -199,9 +192,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         private async Task MarkAllLibrariesInFolderAsIgnoredByUnityAsync(string folder)
         {
-            await new DirectoryInfo(folder)
-                .GetFiles("*.dll", SearchOption.AllDirectories)
-                .ToList()
+            await FindLibrariesInFolder(folder)
                 .ForEachAsync(x => unityMetaFileGenerator.GenerateAsync(
                     $"{x.FullName}.meta",
                     "PluginImporter:\n" +
@@ -234,15 +225,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         private async Task GenerateRoslynAnalyzerUnityMetaFilesAsync(string packageVersionFolder)
         {
-            DirectoryInfo directoryInfo = new DirectoryInfo(Path.Combine(packageVersionFolder, "analyzers"));
-
-            if (!directoryInfo.Exists)
-            {
-                return;
-            }
-
-            await directoryInfo
-                .GetFiles("*.dll", SearchOption.AllDirectories)
+            await FindLibrariesInFolder(Path.Combine(packageVersionFolder, "analyzers"))
                 .ForEachAsync(async x =>
                 {
                     Log.LogMessage(MessageImportance.High, $"    - Processing Roslyn analyzer assembly '{Path.GetRelativePath(packageVersionFolder, x.FullName)}'.");
@@ -308,6 +291,18 @@ namespace MrWatts.MSBuild.UnityPostProcessor
                     );
                 }
             );
+        }
+
+        private List<FileInfo> FindLibrariesInFolder(string folder)
+        {
+            DirectoryInfo directoryInfo = new DirectoryInfo(folder);
+
+            if (!directoryInfo.Exists)
+            {
+                return new List<FileInfo>();
+            }
+
+            return directoryInfo.GetFiles("*.dll", SearchOption.AllDirectories).ToList();
         }
 
         private async Task<bool> IsPackageShippedByUnityAsync(string packageName)
