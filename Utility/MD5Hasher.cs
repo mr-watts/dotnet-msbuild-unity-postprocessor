@@ -3,9 +3,9 @@ using System.Security.Cryptography;
 
 namespace MrWatts.MSBuild.UnityPostProcessor
 {
-    public sealed class MD5Hasher
+    internal sealed class MD5Hasher
     {
-        public string Hash(string @string)
+        internal string Hash(string @string)
         {
             using MD5 md5 = MD5.Create();
             byte[] hashBytes = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(@string));

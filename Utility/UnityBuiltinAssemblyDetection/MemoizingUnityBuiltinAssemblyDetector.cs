@@ -3,13 +3,13 @@ using System.Threading.Tasks;
 
 namespace MrWatts.MSBuild.UnityPostProcessor
 {
-    public sealed class MemoizingUnityBuiltinAssemblyDetector : IUnityBuiltinAssemblyDetector
+    internal sealed class MemoizingUnityBuiltinAssemblyDetector : IUnityBuiltinAssemblyDetector
     {
         private readonly IUnityBuiltinAssemblyDetector delegatee;
 
         private readonly ConcurrentDictionary<string, string[]> cache = new ConcurrentDictionary<string, string[]>(System.StringComparer.Ordinal);
 
-        public MemoizingUnityBuiltinAssemblyDetector(IUnityBuiltinAssemblyDetector delegatee)
+        internal MemoizingUnityBuiltinAssemblyDetector(IUnityBuiltinAssemblyDetector delegatee)
         {
             this.delegatee = delegatee;
         }

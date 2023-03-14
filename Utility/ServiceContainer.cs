@@ -1,13 +1,13 @@
 ﻿namespace MrWatts.MSBuild.UnityPostProcessor
 {
-    public sealed class ServiceContainer
+    internal sealed class ServiceContainer
     {
-        public MD5Hasher MD5Hasher { get; }
-        public UnityGuidGenerator UnityGuidGenerator { get; }
-        public UnityMetaFileGenerator UnityMetaFileGenerator { get; }
-        public IUnityBuiltinAssemblyDetector UnityBuiltinAssemblyDetector { get; }
+        internal MD5Hasher MD5Hasher { get; }
+        internal UnityGuidGenerator UnityGuidGenerator { get; }
+        internal UnityMetaFileGenerator UnityMetaFileGenerator { get; }
+        internal IUnityBuiltinAssemblyDetector UnityBuiltinAssemblyDetector { get; }
 
-        public ServiceContainer()
+        internal ServiceContainer()
         {
             MD5Hasher = new MD5Hasher();
             UnityGuidGenerator = new UnityGuidGenerator(MD5Hasher);

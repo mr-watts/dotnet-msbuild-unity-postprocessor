@@ -2,7 +2,7 @@
 
 namespace MrWatts.MSBuild.UnityPostProcessor
 {
-    public interface IUnityBuiltinAssemblyDetector
+    internal interface IUnityBuiltinAssemblyDetector
     {
         Task<string[]> DetectAsync(string unityInstallationBasePath, string unityProjectFolder);
     }
