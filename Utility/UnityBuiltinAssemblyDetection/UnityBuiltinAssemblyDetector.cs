@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MrWatts.MSBuild.UnityPostProcessor
 {
-    public sealed class UnityBuiltinAssemblyDetector : IUnityBuiltinAssemblyDetector
+    internal sealed class UnityBuiltinAssemblyDetector : IUnityBuiltinAssemblyDetector
     {
         public async Task<string[]> DetectAsync(string unityInstallationBasePath, string unityProjectFolder)
         {
