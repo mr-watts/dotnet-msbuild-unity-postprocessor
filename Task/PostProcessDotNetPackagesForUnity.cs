@@ -22,6 +22,30 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         [Required]
         public string UnityInstallationBasePath { get; set; } = default!;
 
+        /// <summary>
+        /// <para>
+        /// Whether to tag Roslyn analyzers appropriately so Unity picks them up.
+        /// </para>
+        /// <para>
+        /// Having them picked up by Unity will cause Unity to pass them on to IDE packages such as the VSCode package
+        /// (which is now deprecated), so they can in turn embed them inside the C# project files for tools such as OmniSharp.
+        /// </para>
+        /// <para>
+        /// Setting this to true will also make Unity run Roslyn analyzers inside the editor by default, blocking play
+        /// mode if any rules report errors, and it will slow down itertaion time. If you don't want this, you can
+        /// disable it by unticking 'Enable Roslyn Analyzers' inside your project settings.
+        /// </para>
+        /// <para>
+        /// Note that, for Unity 2022, it's now impossible to disable Roslyn analyzers inside the editor. If you have
+        /// rules that need configuration through editorconfig, Unity doesn't support reading these, so you might get
+        /// the wrong errors reported in Unity and the correct ones in your IDE (see also:
+        /// https://issuetracker.unity3d.com/issues/dot-editorconfig-files-are-ignored-when-a-roslyn-analyzer-is-running-through-the-editor)
+        /// Not tagging Roslyn analyzers using this setting will Unity not pick them up, but you will need to find
+        /// another way to run them in your IDE and lose the ability to run them inside the editor.
+        /// </para>
+        /// </summary>
+        public bool TagRoslynAnalyzers { get; set; } = true;
+
         public PostProcessDotNetPackagesForUnity()
         {
             ServiceContainer serviceContainer = new ServiceContainer();
@@ -228,6 +252,12 @@ namespace MrWatts.MSBuild.UnityPostProcessor
             await FindLibrariesInFolder(Path.Combine(packageVersionFolder, "analyzers"))
                 .ForEachAsync(async x =>
                 {
+                    if (!TagRoslynAnalyzers)
+                    {
+                        Log.LogMessage(MessageImportance.High, $"    - Tagging Roslyn analyzers is disabled, ignoring assembly '{Path.GetRelativePath(packageVersionFolder, x.FullName)}'.");
+                        return;
+                    }
+
                     Log.LogMessage(MessageImportance.High, $"    - Processing Roslyn analyzer assembly '{Path.GetRelativePath(packageVersionFolder, x.FullName)}'.");
 
                     await unityMetaFileGenerator.GenerateAsync(
