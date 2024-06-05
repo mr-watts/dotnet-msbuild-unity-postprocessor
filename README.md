@@ -27,7 +27,7 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
 
     <UsingTask TaskName="UnityPostProcessor.PostProcessDotNetPackagesForUnity" AssemblyFile="$(PkgMrWatts_MSBuild_UnityPostProcessor)/lib/netstandard2.1/MSBuildUnityPostProcessor.dll" />
 
-    <Target Name="PostProcessDotNetPackagesForUnity" AfterTargets="Restore">
+    <Target Name="PostProcessDotNetPackagesForUnity">
         <Message Text="Running post-processing script for Unity..." Importance="high" />
         <PostProcessDotNetPackagesForUnity ProjectRoot="$(ProjectDir)" PackageRoot="$(NuGetPackageRoot)" UnityInstallationBasePath="$(UNITY_INSTALLATION_BASE_PATH)" />
     </Target>
@@ -40,24 +40,14 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
 After that, **set `UNITY_INSTALLATION_BASE_PATH` as environment variable** (e.g. the same way you set `MRWATTS_PRIVATE_PACKAGE_REGISTRY_USERNAME` for `nuget.config`), and run:
 
 ```sh
-dotnet restore NuGetDependencies.csproj
+dotnet msbuild -target:PostProcessDotNetPackagesForUnity -restore NuGetDependencies.csproj
 ```
 
 On your project file, this task will be executed to post-process NuGet dependencies specifically for Unity. Output will be displayed as this happens.
 
 After post-processing finishes, you can start or focus the Unity window of your project and let Unity import the dependencies.
 
-### Error `task could not be loaded`
-
-If you see something like this the first time you restore:
-
-```sh
-/path/to/project/NuGetDependencies.csproj(43,9): error MSB4062: The "UnityPostProcessor.PostProcessDotNetPackagesForUnity" task could not be loaded from the assembly /lib/netstandard2.1/MSBuildUnityPostProcessor.dll. Could not load file or assembly '/lib/netstandard2.1/MSBuildUnityPostProcessor.dll'. The system cannot find the file specified.
-
-/path/to/project/NuGetDependencies.csproj(43,9): error MSB4062:  Confirm that the <UsingTask> declaration is correct, that the assembly and all its dependencies are available, and that the task contains a public class that implements Microsoft.Build.Framework.ITask.
-```
-
-Just run the restore a second time. There seems to be a bug in MSBuild where `PkgMrWatts_MSBuild_UnityPostProcessor` isn't filled in yet if the package isn't in the NuGet cache yet, so this might also happen every time you switch to a new version and it's not in your package cache yet.
+> Note that `AfterTargets="Restore"` to automatically run after restore is not used because it will not work [due to the way NuGet operates internally](https://github.com/NuGet/Home/issues/13513).
 
 ## Development
 
