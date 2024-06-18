@@ -8,7 +8,7 @@ Next to eliminating duplicate efforts, this also yields free support for private
 
 ## Usage
 
-Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
+Create a `NuGetDependencies.csproj` in your Unity project with the following contents:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
