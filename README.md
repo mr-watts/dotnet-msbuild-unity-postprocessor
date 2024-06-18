@@ -14,6 +14,8 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
         <PostProcessDotNetPackagesForUnityAssemblyFile>$(PkgMrWatts_MSBuild_UnityPostProcessor)/lib/netstandard2.1/MSBuildUnityPostProcessor.dll</PostProcessDotNetPackagesForUnityAssemblyFile>
     </PropertyGroup>
 
