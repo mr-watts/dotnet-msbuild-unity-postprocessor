@@ -8,7 +8,7 @@ Next to eliminating duplicate efforts, this also yields free support for private
 
 ## Usage
 
-Create a `NuGetDependencies.csproj` in your Unity project with the following contents:
+Create `NuGetDependencies/NuGetDependencies.csproj` in your Unity project with the following contents:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -45,12 +45,26 @@ Create a `NuGetDependencies.csproj` in your Unity project with the following con
 </Project>
 ```
 
+Next, create `NuGetDependencies/nuget.config` with these contents:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <config>
+        <add key="globalPackagesFolder" value="../Assets/Packages/NuGet" />
+		<add key="dependencyversion" value="Highest" />
+    </config>
+</configuration>
+```
+
+This will ensure that installed dependencies end up in your Unity project and that Unity can scan them to pick them up.
+
 > If you stumbled upon this public repository, know that that this package is currently only published to our private registry, so you will need a `nuget.config` to tell .NET CLI to search there and get access from us, or build this yourself and update `UsingTask` to reference the built DLL.
 
 After that, **set `UNITY_INSTALLATION_BASE_PATH` as environment variable** (e.g. the same way you set `MRWATTS_PRIVATE_PACKAGE_REGISTRY_USERNAME` for `nuget.config`), and run:
 
 ```sh
-dotnet msbuild -target:PostProcessDotNetPackagesForUnity -restore NuGetDependencies.csproj
+dotnet msbuild -target:PostProcessDotNetPackagesForUnity -restore NuGetDependencies
 ```
 
 On your project file, this task will be executed to post-process NuGet dependencies specifically for Unity. Output will be displayed as this happens.
