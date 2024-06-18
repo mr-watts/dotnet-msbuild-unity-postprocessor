@@ -22,6 +22,7 @@ Create `NuGetDependencies/NuGetDependencies.csproj` in your Unity project with t
     <ItemGroup>
 
         <!-- Production dependencies. -->
+        <!-- <PackageReference Include="System.Text.Json" Version="7.0.2" /> -->
         <!-- ... -->
 
         <!-- Development dependencies. -->
