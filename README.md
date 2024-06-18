@@ -45,7 +45,7 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
 </Project>
 ```
 
-> Note that this package is published to our private registry, so you will need a `nuget.config` to tell .NET CLI to search there as well (see also [this example](https://gitlab.com/mr-watts/medenvision/live-surgery/unity-live-surgery/-/blob/d55ed4e4ba7dea5887f4ebf9c1b148e104d0936c/nuget.config)).
+> If you stumbled upon this public repository, know that that this package is currently only published to our private registry, so you will need a `nuget.config` to tell .NET CLI to search there and get access from us, or build this yourself and update `UsingTask` to reference the built DLL.
 
 After that, **set `UNITY_INSTALLATION_BASE_PATH` as environment variable** (e.g. the same way you set `MRWATTS_PRIVATE_PACKAGE_REGISTRY_USERNAME` for `nuget.config`), and run:
 
