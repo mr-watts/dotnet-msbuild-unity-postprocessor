@@ -52,7 +52,7 @@ Next, create `NuGetDependencies/nuget.config` with these contents:
 <configuration>
     <config>
         <add key="globalPackagesFolder" value="../Assets/Packages/NuGet" />
-		<add key="dependencyversion" value="Highest" />
+        <add key="dependencyversion" value="Highest" />
     </config>
 </configuration>
 ```
