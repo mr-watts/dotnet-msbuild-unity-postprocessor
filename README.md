@@ -2,7 +2,7 @@
 
 Task for SDK-style .NET projects that post-processes installed dependencies so they work inside a Unity context.
 
-This is a replacement and different approach to tools such as [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity). Instead of partially reimplementing what `dotnet restore` and standard .NET tooling do, this approach builds upon that by post-processing installed NuGet packages to make them suitable to Unity.
+This is a replacement and different approach to tools such as [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity). Instead of partially reimplementing what `dotnet restore` and standard .NET tooling do, this approach builds upon them by post-processing installed NuGet packages to make them suitable to Unity.
 
 Next to eliminating duplicate efforts, this also yields free support for private registries, lock files, and other advanced .NET CLI features that work out of the box for standard .NET projects as well.
 
