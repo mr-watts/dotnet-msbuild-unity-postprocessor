@@ -13,6 +13,10 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
 
+    <PropertyGroup>
+        <PostProcessDotNetPackagesForUnityAssemblyFile>$(PkgMrWatts_MSBuild_UnityPostProcessor)/lib/netstandard2.1/MSBuildUnityPostProcessor.dll</PostProcessDotNetPackagesForUnityAssemblyFile>
+    </PropertyGroup>
+
     <ItemGroup>
 
         <!-- Production dependencies. -->
@@ -29,7 +33,7 @@ Tweak your `NuGetDependencies.csproj` .NET project to contain the following:
         <RemoveDir Directories="$(NuGetPackageRoot)" />
     </Target>
 
-    <UsingTask TaskName="UnityPostProcessor.PostProcessDotNetPackagesForUnity" AssemblyFile="$(PkgMrWatts_MSBuild_UnityPostProcessor)/lib/netstandard2.1/MSBuildUnityPostProcessor.dll" />
+    <UsingTask TaskName="UnityPostProcessor.PostProcessDotNetPackagesForUnity" AssemblyFile="$(PostProcessDotNetPackagesForUnityAssemblyFile)" />
 
     <Target Name="PostProcessDotNetPackagesForUnity">
         <Message Text="Running post-processing script for Unity..." Importance="high" />
