@@ -172,9 +172,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
                 $"    \"name\": \"{assemblyDefinitionName}\",\n" +
                 "    \"rootNamespace\": \"\",\n" +
                 "    \"references\": [],\n" +
-                "    \"includePlatforms\": [\n" +
-                "        \"Editor\"\n" +
-                "    ],\n" +
+                "    \"includePlatforms\": [],\n" +
                 "    \"excludePlatforms\": [],\n" +
                 "    \"allowUnsafeCode\": false,\n" +
                 "    \"overrideReferences\": true,\n" +
