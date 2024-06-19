@@ -11,7 +11,7 @@
 
     <PropertyGroup>
         <PackageId>MrWatts.MSBuild.UnityPostProcessor</PackageId>
-        <Version>1.1.0</Version>
+        <Version>1.2.0</Version>
         <Authors>Mr. Watts</Authors>
         <Company>Mr. Watts</Company>
     </PropertyGroup>
