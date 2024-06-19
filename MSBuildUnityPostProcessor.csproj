@@ -18,7 +18,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.4.0" PrivateAssets="All" />
-        <PackageReference Include="MrWatts.CodeAnalysisRulesets" Version="2.3.2" PrivateAssets="All" GeneratePathProperty="true" />
+        <PackageReference Include="MrWatts.CodeAnalysisRulesets" Version="3.0.0" PrivateAssets="All" GeneratePathProperty="true" />
     </ItemGroup>
 
     <PropertyGroup>

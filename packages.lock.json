@@ -19,16 +19,16 @@
       },
       "MrWatts.CodeAnalysisRulesets": {
         "type": "Direct",
-        "requested": "[2.3.2, )",
-        "resolved": "2.3.2",
-        "contentHash": "6L1AnQDaWBewhHuz5sV0EDGtivnSYpf+zPV8q42yg0b91DD/Jdatm24XpwRtieIPVWTFiwRzZNVBLeCXLIusmw==",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "n7tQSfEM/KfjLP+Ak12/D+qRr6JyHOJquy9A4uj6yyYgIo5gh4bRJHDR1bXv3mADzYRAn7g8IDuIVTrTZcG3Ag==",
         "dependencies": {
           "ErrorProne.NET.CoreAnalyzers": "0.4.0-beta.1",
-          "Meziantou.Analyzer": "1.0.756",
-          "Nopen.NET": "1.1.0-beta.23",
-          "Roslynator.Analyzers": "4.2.0",
-          "Roslynator.CodeAnalysis.Analyzers": "4.2.0",
-          "Roslynator.Formatting.Analyzers": "4.2.0"
+          "Meziantou.Analyzer": "2.0.85",
+          "Microsoft.Unity.Analyzers": "1.17.0",
+          "Roslynator.Analyzers": "4.5.0",
+          "Roslynator.CodeAnalysis.Analyzers": "4.5.0",
+          "Roslynator.Formatting.Analyzers": "4.5.0"
         }
       },
       "ErrorProne.NET.CoreAnalyzers": {
@@ -38,8 +38,8 @@
       },
       "Meziantou.Analyzer": {
         "type": "Transitive",
-        "resolved": "1.0.756",
-        "contentHash": "S8Y3H+HjiJKZTvVmJTco2diJ7IXeNMV32Xna6WGYp+YoApSZuVjMzJBL8+wuSCGQx0ykBBEZD1vsLcS3SYED2w=="
+        "resolved": "2.0.85",
+        "contentHash": "FvTQGv7BuknbzUvG70ty6BgxVaXCbCJ/2WQdwsnIfPIYyjqex1U5B4IRrP2FDhzEu1qvGIqw5zhhApqf4hnDpQ=="
       },
       "Microsoft.Build.Framework": {
         "type": "Transitive",
@@ -59,6 +59,11 @@
           "System.Runtime.CompilerServices.Unsafe": "6.0.0"
         }
       },
+      "Microsoft.Unity.Analyzers": {
+        "type": "Transitive",
+        "resolved": "1.17.0",
+        "contentHash": "yg1ThpevWnblJTCIzPw52EUzuzBHdjWT0yxpCfDgFT2ti6HLRB1ZZMoKYYx9U/egqQHL7cfHkPY5psLHCL9AoA=="
+      },
       "Microsoft.Win32.Registry": {
         "type": "Transitive",
         "resolved": "5.0.0",
@@ -70,25 +75,20 @@
           "System.Security.Principal.Windows": "5.0.0"
         }
       },
-      "Nopen.NET": {
-        "type": "Transitive",
-        "resolved": "1.1.0-beta.23",
-        "contentHash": "i5J0xYvJXwqT2nBK0vE+lv867sSESJ9/w3pgf2JgWCgQsOFDetmX2HTrxsHPG8SZGYSleNhRNIJbNDYZerUnWQ=="
-      },
       "Roslynator.Analyzers": {
         "type": "Transitive",
-        "resolved": "4.2.0",
-        "contentHash": "3N8CNx1Q/Q5VDDL7qgfZRgTURyMqzHAkAB59AZKRnsOXoh2n9xRzhiBMIbJaUtBATmieECBx68GcjRn2xoNDug=="
+        "resolved": "4.5.0",
+        "contentHash": "C0ks0LQ/5S8zEEcb16Ntqm9DaFyOVTIGnvwTNs4asKIozoiyiHiVivpJH2zRmpN0/N0HEW/qdi9sp0bjHTQxRw=="
       },
       "Roslynator.CodeAnalysis.Analyzers": {
         "type": "Transitive",
-        "resolved": "4.2.0",
-        "contentHash": "axqMI0XhQvneA52CdfHLwngs2UXk7U/QecuX6D+9qjoLGZMkg5BGBplaGcpm8J9FzgjssriRlN2a0/qaoBg/4A=="
+        "resolved": "4.5.0",
+        "contentHash": "adLK7IzErdrweLT/Avv+xlC1JEpoxX+kyUshNCKQf0qxNug9xQzrLQg2NsN1SoSg3kn5O5WQXG2pp+TGESmx0g=="
       },
       "Roslynator.Formatting.Analyzers": {
         "type": "Transitive",
-        "resolved": "4.2.0",
-        "contentHash": "cJpb6q2j92a3QTz6yJs2ZHi3F/AfEnpMXe38X5rfVlCLzF01t68dNz460HyI0BnO4UyJ3B+QhLHeqof2oh019w=="
+        "resolved": "4.5.0",
+        "contentHash": "VkcKBoxTWSv5u3NqQKTOCBqZUAumGVzE/HbMqPt7hloosJvN0WBWVlK2Z2sKbGqSj5v0FWidzS5lPM/CvrwFhQ=="
       },
       "System.Buffers": {
         "type": "Transitive",
