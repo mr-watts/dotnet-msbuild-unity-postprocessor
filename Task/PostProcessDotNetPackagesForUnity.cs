@@ -24,7 +24,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         /// <summary>
         /// <para>
-        /// Whether to tag Roslyn analyzers appropriately so Unity picks them up.
+        /// Whether to tag Roslyn analyzers and source generators appropriately so Unity picks them up.
         /// </para>
         /// <para>
         /// Having them picked up by Unity will cause Unity to pass them on to IDE packages such as the VSCode package
@@ -45,6 +45,36 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         /// </para>
         /// </summary>
         public bool TagRoslynAnalyzers { get; set; } = true;
+
+        /// <summary>
+        /// <para>
+        /// Whether to create Unity assembly definition (.asmdef) per NuGet package version folder.
+        /// </para>
+        /// <para>
+        /// Without these assembly definitions, this will automatically make Roslyn analyzers in them be picked up by
+        /// Unity and applied to all other assembly definitions in your Unity project (at least if you have
+        /// TagRoslynAnalyzers enabled), which includes your own code, but also, at least in Unity 2023.2, to Unity
+        /// built-in packages. This can cause the Unity Editor to report errors with its own packages if you have
+        /// stricter custom Roslyn analyzers and/or rulesets.
+        /// </para>
+        /// <para>
+        /// Before Unity 2022 it was possible to turn off 'Enable Roslyn Analyzers' in the Player Settings to prevent this.
+        /// This would also avoid Unity running Roslyn analyzers inside the Unity Editor, slowing down iteration
+        /// performance and possibly blocking play mode.
+        /// </para>
+        /// <para>
+        /// This allows working around the problem for Unity 2022 and up due to the way Roslyn analyzer scoping works,
+        /// which is described in
+        /// https://docs.unity3d.com/2023.2/Documentation/Manual/roslyn-analyzers.html#analyser-scope-anchor-link.
+        /// </para>
+        /// <para>
+        /// Note that if you enable this, if you still want the Unity editor to use your Roslyn analyzer or source
+        /// generator, you must then explicitly reference the generated NuGet package version asmdef in all of your
+        /// own assembly definitions, causing them to apply transitively. Another advantage is that you can then
+        /// cherry-pick which analyzers and source generators you want to have run where.
+        /// </para>
+        /// </summary>
+        public bool GenerateAssemblyDefinitionsPerPackageVersion { get; set; }
 
         public PostProcessDotNetPackagesForUnity()
         {
@@ -112,11 +142,77 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         private async Task ProcessPackageVersionAsync(string packageVersionFolder)
         {
+            if (GenerateAssemblyDefinitionsPerPackageVersion)
+            {
+                // We must conditionally generate these, because generating them with autoReferenced to 'true' is not
+                // the same as not generating them; they will only apply transitively (at least in Unity 2023.2) if
+                // there is either no asmdef or if they are explicitly referenced.
+                await CreateAssemblyDefinitionToScopeRoslynAnalyzersAsync(packageVersionFolder);
+            }
+
             DropConflictingNativeLibraries(packageVersionFolder);
             DropUnsupportedNativeRuntimeLibraries(packageVersionFolder);
 
             await FilterMatchingDotNetVersionFoldersAsync(packageVersionFolder);
             await GenerateRoslynAnalyzerUnityMetaFilesAsync(packageVersionFolder);
+        }
+
+        /// <summary>
+        /// Create a Unity assembly definition so Roslyn analyzers and source generators inside the package are scoped
+        /// to it. See also the documentation of GenerateAssemblyDefinitionsPerPackageVersion.
+        /// </summary>
+        /// <param name="packageVersionFolder"></param>
+        private async Task CreateAssemblyDefinitionToScopeRoslynAnalyzersAsync(string packageVersionFolder)
+        {
+            string assemblyDefinitionName = GeneratePackageVersionAssemblyDefinitionName(packageVersionFolder);
+
+            await File.WriteAllTextAsync(
+                Path.Combine(packageVersionFolder, $"{assemblyDefinitionName}.asmdef"),
+                "{\n" +
+                $"    \"name\": \"{assemblyDefinitionName}\",\n" +
+                "    \"rootNamespace\": \"\",\n" +
+                "    \"references\": [],\n" +
+                "    \"includePlatforms\": [\n" +
+                "        \"Editor\"\n" +
+                "    ],\n" +
+                "    \"excludePlatforms\": [],\n" +
+                "    \"allowUnsafeCode\": false,\n" +
+                "    \"overrideReferences\": true,\n" +
+                "    \"precompiledReferences\": [],\n" +
+                "    \"autoReferenced\": false,\n" +
+                "    \"defineConstraints\": [],\n" +
+                "    \"versionDefines\": [],\n" +
+                "    \"noEngineReferences\": true\n" +
+                "}\n"
+            );
+
+            await File.WriteAllTextAsync(
+                Path.Combine(packageVersionFolder, "LookUnityThereReallyIsOneScriptInThisAssembly.cs"),
+                "/*\n" +
+                "    Exists solely to stop Unity from complaining there are no scripts in this assembly, and otherwise\n" +
+                "    refusing to recognize it exists.\n" +
+                "*/"
+            );
+        }
+
+        private string GeneratePackageVersionAssemblyDefinitionName(string packageVersionFolder)
+        {
+            string packageFolder = Path.GetDirectoryName(packageVersionFolder);
+
+            const string prefix = "nuget.analyzers.";
+
+            string name = $"{prefix}{Path.GetFileName(packageFolder)}";
+
+            if (Directory.GetDirectories(packageFolder).Length > 1)
+            {
+                // Multiple versions of same package installed, name must be unique so we must include the version.
+                // With a single version we don't include the version since updates to the package would cause Unity
+                // references to break and this is by far the most common scenario.
+                name += ".";
+                name += Path.GetFileName(packageVersionFolder);
+            }
+
+            return name;
         }
 
         /// <summary>

@@ -78,30 +78,13 @@ After post-processing finishes, you can start or focus the Unity window of your 
 
 The task will mark Roslyn analyzers such as Roslynator and source generators with the `RoslynAnalyzer` tag for Unity automatically. Note that for at least Unity 2022 and up this means that these will automatically apply to every other assembly definition [due to the way scoping in Unity works](https://docs.unity3d.com/2023.2/Documentation/Manual/roslyn-analyzers.html#analyser-scope-anchor-link).
 
-In older Unity versions you could turn off 'Enable Roslyn Analyzers' in the player settings but this option no longer exists since Unity 2022, so if you don't want this, you can create e.g. `Assets/Packages/RoslynAnalyzerWrapper.asmdef` with the following contents:
+In older Unity versions you could turn off 'Enable Roslyn Analyzers' in the player settings but this option no longer exists since Unity 2022 and up, so if you don't want this, you can enable `GenerateAssemblyDefinitionsPerPackageVersion`:
 
-```json
-{
-    "name": "RoslynAnalyzerWrapper",
-    "rootNamespace": "",
-    "references": [],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [],
-    "autoReferenced": false,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
-}
+```xml
+<PostProcessDotNetPackagesForUnity ... GenerateAssemblyDefinitionsPerPackageVersion="true" />
 ```
 
-This will make them only apply to code inside this assembly definition. As mentioned in the documentation, you can then reference this wrapper in your other assembly definitions to make the analyzers 'leak through' and also apply to them.
-
-> Referencing some analyzers or source generators but not others and cherry-picking is currently not supported. This might be implemented in the future by creating an asmdef automatically per NuGet package in this task during post-processing.
+What this will do is generate a Unity assembly definition for each NuGet package (and for each version if multiple versions turn out to be installed) prefixed with `nuget.analyzers.` (e.g. `nuget.analyzers.zeroql`). You can then reference this assembly definition in your own to cherry-pick analyzers and source generators to apply to them as well. This allows you to apply e.g. the ZeroQL source generator to your Unity code (`Scripts.asmdef` or what you named it) without having other analyzers such as Roslynator also apply.
 
 #### Disabling Only In Unity Editor
 
