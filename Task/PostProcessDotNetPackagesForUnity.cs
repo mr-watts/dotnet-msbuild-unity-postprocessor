@@ -431,7 +431,20 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         private async Task<bool> IsPackageShippedByUnityAsync(string packageName)
         {
-            string[] builtinUnityDotNetAssemblies = await unityBuiltinAssemblyDetector.DetectAsync(UnityInstallationBasePath, ProjectRoot);
+            string[] builtinUnityDotNetAssemblies;
+
+            try
+            {
+                builtinUnityDotNetAssemblies = await unityBuiltinAssemblyDetector.DetectAsync(UnityInstallationBasePath, ProjectRoot);
+            }
+            catch (UnityVersionNotFoundException e)
+            {
+                throw new UnityVersionNotFoundException(
+                    "Could not find folder of Unity version that is used by project, are you sure you have this Unity " +
+                    $"version installed and that 'UnityInstallationBasePath' is set correctly? Original error: {e.Message}",
+                    e
+                );
+            }
 
             if (builtinUnityDotNetAssemblies.Length == 0)
             {
