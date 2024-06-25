@@ -11,9 +11,9 @@ namespace MrWatts.MSBuild.UnityPostProcessor
             this.md5Hasher = md5Hasher;
         }
 
-        internal string Generate()
+        internal string Generate(string? seed = null)
         {
-            return md5Hasher.Hash(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffffK"));
+            return md5Hasher.Hash(seed ?? DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffffK"));
         }
     }
 }

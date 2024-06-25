@@ -12,12 +12,14 @@ namespace MrWatts.MSBuild.UnityPostProcessor
             this.unityGuidGenerator = unityGuidGenerator;
         }
 
-        internal Task GenerateAsync(string path, string additionalContents)
+        internal Task GenerateAsync(string path, string additionalContents, string? guid = null)
         {
+            guid ??= unityGuidGenerator.Generate();
+
             return File.WriteAllTextAsync(
                 path,
                 "fileFormatVersion: 2\n" +
-                $"guid: {unityGuidGenerator.Generate()}\n" +
+                $"guid: {guid}\n" +
                 additionalContents + "\n"
             );
         }
