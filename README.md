@@ -33,7 +33,13 @@ Create `NuGetDependencies/NuGetDependencies.csproj` in your Unity project with t
     <!-- NOTE: Necessary because a `dotnet restore` will not prune packages you remove automatically. -->
     <Target Name="CleanUpUnityPackageFolder" BeforeTargets="Restore">
         <Message Text="Cleaning up installed packages to start from a clean slate..." Importance="high" />
-        <RemoveDir Directories="$(NuGetPackageRoot)" />
+
+        <!-- We can't use NuGetPackageRoot here due to it not being available yet before restore, so read the value explicitly. -->
+        <XmlPeek XmlInputPath="nuget.config" Query="configuration/config/add[@key='globalPackagesFolder']/@value">
+            <Output TaskParameter="Result" ItemName="value" />
+        </XmlPeek>
+
+        <RemoveDir Directories="@(value)" />
     </Target>
 
     <UsingTask TaskName="UnityPostProcessor.PostProcessDotNetPackagesForUnity" AssemblyFile="$(PostProcessDotNetPackagesForUnityAssemblyFile)" />
