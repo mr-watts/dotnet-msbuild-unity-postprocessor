@@ -10,6 +10,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 {
     public sealed class PostProcessDotNetPackagesForUnity : Microsoft.Build.Utilities.Task
     {
+        private UnityGuidGenerator unityGuidGenerator;
         private UnityMetaFileGenerator unityMetaFileGenerator;
         private IUnityBuiltinAssemblyDetector unityBuiltinAssemblyDetector;
 
@@ -79,6 +80,7 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         public PostProcessDotNetPackagesForUnity()
         {
             ServiceContainer serviceContainer = new ServiceContainer();
+            unityGuidGenerator = serviceContainer.UnityGuidGenerator;
             unityMetaFileGenerator = serviceContainer.UnityMetaFileGenerator;
             unityBuiltinAssemblyDetector = serviceContainer.UnityBuiltinAssemblyDetector;
         }
@@ -165,9 +167,10 @@ namespace MrWatts.MSBuild.UnityPostProcessor
         private async Task CreateAssemblyDefinitionToScopeRoslynAnalyzersAsync(string packageVersionFolder)
         {
             string assemblyDefinitionName = GeneratePackageVersionAssemblyDefinitionName(packageVersionFolder);
+            string assemblyDefinitionFileName = $"{assemblyDefinitionName}.asmdef";
 
             await File.WriteAllTextAsync(
-                Path.Combine(packageVersionFolder, $"{assemblyDefinitionName}.asmdef"),
+                Path.Combine(packageVersionFolder, assemblyDefinitionFileName),
                 "{\n" +
                 $"    \"name\": \"{assemblyDefinitionName}\",\n" +
                 "    \"rootNamespace\": \"\",\n" +
@@ -182,6 +185,16 @@ namespace MrWatts.MSBuild.UnityPostProcessor
                 "    \"versionDefines\": [],\n" +
                 "    \"noEngineReferences\": true\n" +
                 "}\n"
+            );
+
+            await unityMetaFileGenerator.GenerateAsync(
+                Path.Combine(packageVersionFolder, $"{assemblyDefinitionFileName}.meta"),
+                "AssemblyDefinitionImporter:\n" +
+                "  externalObjects: {}\n" +
+                "  userData: \n" +
+                "  assetBundleName: \n" +
+                "  assetBundleVariant: ",
+                unityGuidGenerator.Generate(assemblyDefinitionName)
             );
 
             await File.WriteAllTextAsync(
@@ -431,7 +444,20 @@ namespace MrWatts.MSBuild.UnityPostProcessor
 
         private async Task<bool> IsPackageShippedByUnityAsync(string packageName)
         {
-            string[] builtinUnityDotNetAssemblies = await unityBuiltinAssemblyDetector.DetectAsync(UnityInstallationBasePath, ProjectRoot);
+            string[] builtinUnityDotNetAssemblies;
+
+            try
+            {
+                builtinUnityDotNetAssemblies = await unityBuiltinAssemblyDetector.DetectAsync(UnityInstallationBasePath, ProjectRoot);
+            }
+            catch (UnityVersionNotFoundException e)
+            {
+                throw new UnityVersionNotFoundException(
+                    "Could not find folder of Unity version that is used by project, are you sure you have this Unity " +
+                    $"version installed and that 'UnityInstallationBasePath' is set correctly? Original error: {e.Message}",
+                    e
+                );
+            }
 
             if (builtinUnityDotNetAssemblies.Length == 0)
             {

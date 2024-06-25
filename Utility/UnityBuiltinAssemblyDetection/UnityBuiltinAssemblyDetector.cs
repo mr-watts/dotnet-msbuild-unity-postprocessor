@@ -21,7 +21,23 @@ namespace MrWatts.MSBuild.UnityPostProcessor
             }
 
             string projectUnityVersion = match.Value;
-            string unityDotNetAssemblyFolder = Path.Combine(unityInstallationBasePath, projectUnityVersion, "Editor", "Data", "NetStandard", "compat", "2.1.0", "shims", "netstandard");
+            string unityVersionFolder = Path.Combine(unityInstallationBasePath, projectUnityVersion);
+
+            if (!Directory.Exists(unityVersionFolder))
+            {
+                throw new UnityVersionNotFoundException($"Could not find Unity version {projectUnityVersion} at path '{unityVersionFolder}'");
+            }
+
+            string unityDotNetAssemblyFolder = Path.Combine(unityVersionFolder, "Editor", "Data", "NetStandard", "compat", "2.1.0", "shims", "netstandard");
+
+            if (!Directory.Exists(unityDotNetAssemblyFolder))
+            {
+                throw new Exception(
+                    $"Unity version {projectUnityVersion} exists but it does not have a folder with .NET asseblies " +
+                    $"at '{unityDotNetAssemblyFolder}', which either implies a bug in the postprocessor or your " +
+                    "Unity installation is corrupt"
+                );
+            }
 
             return new DirectoryInfo(unityDotNetAssemblyFolder)
                 .GetFiles("*.dll")
